@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>민재네 가족 금지어</title>
+    <meta
+      name="description"
+      content="엄마, 아빠, 민재가 함께 보는 이달의 금지어 벌금 현황판"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">민재네 가족 금지어</p>
+          <h1 id="mainWord">이달의 금지어를 불러오는 중...</h1>
+          <p id="mainWordSub" class="hero-sub">한 번 말할 때마다 200원</p>
+        </div>
+        <div class="hero-pill">
+          <span>이번 달 총 미납</span>
+          <strong id="monthTotal">0원</strong>
+        </div>
+      </header>
+
+      <section id="setupWarning" class="notice hidden">
+        Firebase 설정이 필요합니다. <code>firebase-config.js</code>를 입력한 뒤 다시 열어 주세요.
+      </section>
+
+      <section class="toolbar">
+        <label class="select-label">
+          <span>월 선택</span>
+          <input id="monthInput" type="month" />
+        </label>
+        <button id="adminButton" class="ghost-button" type="button">관리자 세션 연결</button>
+      </section>
+
+      <section class="grid members" aria-label="가족별 금지어 사용 현황">
+        <article class="member-card" data-member-card="mom">
+          <div class="member-top">
+            <span class="avatar">엄</span>
+            <div>
+              <h2>엄마</h2>
+              <p>이번 달 사용 횟수</p>
+            </div>
+          </div>
+          <div class="score-row">
+            <strong data-count="mom">0</strong>
+            <span data-fine="mom">0원</span>
+          </div>
+          <div class="actions master-only">
+            <button data-dec="mom" type="button" aria-label="엄마 횟수 1 감소">-1</button>
+            <button data-inc="mom" type="button" aria-label="엄마 횟수 1 증가">+1</button>
+          </div>
+          <button class="pay-button master-only" data-pay="mom" type="button">벌금 납부</button>
+        </article>
+
+        <article class="member-card" data-member-card="dad">
+          <div class="member-top">
+            <span class="avatar">아</span>
+            <div>
+              <h2>아빠</h2>
+              <p>이번 달 사용 횟수</p>
+            </div>
+          </div>
+          <div class="score-row">
+            <strong data-count="dad">0</strong>
+            <span data-fine="dad">0원</span>
+          </div>
+          <div class="actions master-only">
+            <button data-dec="dad" type="button" aria-label="아빠 횟수 1 감소">-1</button>
+            <button data-inc="dad" type="button" aria-label="아빠 횟수 1 증가">+1</button>
+          </div>
+          <button class="pay-button master-only" data-pay="dad" type="button">벌금 납부</button>
+        </article>
+
+        <article class="member-card" data-member-card="minjae">
+          <div class="member-top">
+            <span class="avatar">민</span>
+            <div>
+              <h2>민재</h2>
+              <p>이번 달 사용 횟수</p>
+            </div>
+          </div>
+          <div class="score-row">
+            <strong data-count="minjae">0</strong>
+            <span data-fine="minjae">0원</span>
+          </div>
+          <div class="actions master-only">
+            <button data-dec="minjae" type="button" aria-label="민재 횟수 1 감소">-1</button>
+            <button data-inc="minjae" type="button" aria-label="민재 횟수 1 증가">+1</button>
+          </div>
+          <button class="pay-button master-only" data-pay="minjae" type="button">벌금 납부</button>
+        </article>
+      </section>
+
+      <section class="content-grid">
+        <article class="panel">
+          <div class="panel-title">
+            <h2>금지어 목록</h2>
+            <span id="wordCount">0개</span>
+          </div>
+          <form id="wordForm" class="inline-form master-only">
+            <input id="wordInput" type="text" placeholder="새 금지어" maxlength="30" />
+            <button type="submit">추가</button>
+          </form>
+          <ul id="wordList" class="word-list"></ul>
+        </article>
+
+        <article class="panel">
+          <div class="panel-title">
+            <h2>월별 집계</h2>
+            <span>200원/회</span>
+          </div>
+          <div id="monthlySummary" class="summary-list"></div>
+        </article>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title">
+          <h2>납부 이력</h2>
+          <span id="paymentCount">0건</span>
+        </div>
+        <div id="paymentList" class="payment-list"></div>
+      </section>
+    </main>
+
+    <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

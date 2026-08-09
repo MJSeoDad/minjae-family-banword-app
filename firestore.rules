@@ -1,0 +1,15 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/apps/minjae-family-banwords/admins/$(request.auth.uid));
+    }
+
+    match /apps/minjae-family-banwords/{document=**} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+  }
+}
