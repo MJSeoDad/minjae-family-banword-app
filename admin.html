@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>민재네 가족 금지어</title>
+    <title>민재네 가족 금지어 관리자</title>
     <meta
       name="description"
-      content="엄마, 아빠, 민재가 함께 보는 이달의 금지어 벌금 현황판"
+      content="민재네 가족 금지어 관리자 화면"
     />
     <link rel="stylesheet" href="styles.css" />
   </head>
@@ -14,7 +14,7 @@
     <main class="app-shell">
       <header class="hero">
         <div>
-          <p class="eyebrow">민재네 가족 금지어</p>
+          <p class="eyebrow">민재네 가족 금지어 관리자</p>
           <h1 id="mainWord">이달의 금지어를 불러오는 중...</h1>
           <p id="mainWordSub" class="hero-sub">한 번 말할 때마다 200원</p>
         </div>
@@ -33,7 +33,7 @@
           <span>월 선택</span>
           <input id="monthInput" type="month" />
         </label>
-        <button id="adminButton" class="ghost-button hidden" type="button">관리자 세션 연결</button>
+        <button id="adminButton" class="ghost-button" type="button">관리자 세션 연결</button>
       </section>
 
       <section class="grid members" aria-label="가족별 금지어 사용 현황">
@@ -129,7 +129,7 @@
     <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
     <script>
-      window.MINJAE_APP_MODE = "viewer";
+      window.MINJAE_APP_MODE = "admin";
     </script>
     <script type="module" src="app.js"></script>
   </body>

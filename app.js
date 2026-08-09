@@ -47,6 +47,8 @@ const state = {
   unsubscribers: []
 };
 
+const isAdminPage = window.MINJAE_APP_MODE === "admin";
+
 const els = {
   mainWord: $("#mainWord"),
   mainWordSub: $("#mainWordSub"),
@@ -94,6 +96,7 @@ function memberStat(memberId) {
 
 function render() {
   document.body.classList.toggle("is-admin", state.isAdmin);
+  els.adminButton.classList.toggle("hidden", !isAdminPage);
   els.adminButton.textContent = state.isAdmin
     ? "관리자 연결됨"
     : state.adminUid
@@ -222,6 +225,7 @@ function startListeners() {
 }
 
 async function ensureAdmin() {
+  if (!isAdminPage) return;
   if (!state.adminUid) {
     const credential = await signInAnonymously(state.auth);
     state.adminUid = credential.user.uid;
@@ -363,9 +367,11 @@ function bindEvents() {
     startListeners();
   });
 
-  els.adminButton.addEventListener("click", () => {
-    ensureAdmin().catch((error) => showToast(error.message));
-  });
+  if (isAdminPage) {
+    els.adminButton.addEventListener("click", () => {
+      ensureAdmin().catch((error) => showToast(error.message));
+    });
+  }
 
   els.wordForm.addEventListener("submit", (event) => {
     addWord(event).catch((error) => showToast(error.message));
