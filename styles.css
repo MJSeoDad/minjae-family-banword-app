@@ -326,6 +326,31 @@ input {
   font-weight: 1000;
 }
 
+.word-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.set-main-button {
+  min-width: auto;
+  width: auto;
+  padding: 0 10px;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.current-badge {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--accent-dark);
+  background: #ffe4cf;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
 .summary-item strong,
 .payment-item strong {
   display: block;

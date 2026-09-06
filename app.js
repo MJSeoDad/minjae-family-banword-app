@@ -121,16 +121,26 @@ function render() {
   els.wordCount.textContent = `${state.words.length}개`;
   els.wordList.innerHTML = state.words.length
     ? state.words
-        .map(
-          (wordItem) => `
-            <li class="word-item ${wordItem.id === word?.id ? "current" : ""}">
+        .map((wordItem) => {
+          const isCurrent = wordItem.id === word?.id;
+          return `
+            <li class="word-item ${isCurrent ? "current" : ""}">
               <span>${escapeHtml(wordItem.text)}</span>
-              <button class="master-only" data-delete-word="${wordItem.id}" type="button" aria-label="${escapeHtml(
-                wordItem.text
-              )} 삭제">×</button>
+              <div class="word-actions">
+                ${
+                  isCurrent
+                    ? `<span class="current-badge">이달의 대표</span>`
+                    : `<button class="master-only set-main-button" data-set-main="${wordItem.id}" type="button" aria-label="${escapeHtml(
+                        wordItem.text
+                      )}를 이달의 금지어로 설정">대표로</button>`
+                }
+                <button class="master-only" data-delete-word="${wordItem.id}" type="button" aria-label="${escapeHtml(
+                  wordItem.text
+                )} 삭제">×</button>
+              </div>
             </li>
-          `
-        )
+          `;
+        })
         .join("")
     : `<li class="word-item"><span>등록된 금지어가 없습니다</span></li>`;
 
@@ -304,6 +314,18 @@ async function deleteWord(wordId) {
   showToast("금지어가 삭제되었습니다.");
 }
 
+async function setMainWord(wordId) {
+  requireAdmin();
+  if (activeWord()?.id === wordId) return;
+
+  await setDoc(
+    appDoc("settings", "main"),
+    { currentWordId: wordId, updatedAt: serverTimestamp() },
+    { merge: true }
+  );
+  showToast("이달의 대표 금지어가 변경되었습니다.");
+}
+
 async function changeCount(memberId, delta) {
   requireAdmin();
   const statRef = appDoc("months", state.month, "stats", memberId);
@@ -385,11 +407,13 @@ function bindEvents() {
     const dec = target.dataset.dec;
     const pay = target.dataset.pay;
     const deleteWordId = target.dataset.deleteWord;
+    const setMainId = target.dataset.setMain;
 
     if (inc) changeCount(inc, 1).catch((error) => showToast(error.message));
     if (dec) changeCount(dec, -1).catch((error) => showToast(error.message));
     if (pay) payFine(pay).catch((error) => showToast(error.message));
     if (deleteWordId) deleteWord(deleteWordId).catch((error) => showToast(error.message));
+    if (setMainId) setMainWord(setMainId).catch((error) => showToast(error.message));
   });
 }
 
