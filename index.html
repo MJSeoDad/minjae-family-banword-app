@@ -33,6 +33,7 @@
           <span>월 선택</span>
           <input id="monthInput" type="month" />
         </label>
+        <button id="carryOverButton" class="ghost-button master-only" type="button">지난달 미납 이월</button>
         <button id="adminButton" class="ghost-button hidden" type="button">관리자 세션 연결</button>
       </section>
 
@@ -49,6 +50,7 @@
             <strong data-count="mom">0</strong>
             <span data-fine="mom">0원</span>
           </div>
+          <p class="carry-note hidden" data-carry="mom"></p>
           <div class="actions master-only">
             <button data-dec="mom" type="button" aria-label="엄마 횟수 1 감소">-1</button>
             <button data-inc="mom" type="button" aria-label="엄마 횟수 1 증가">+1</button>
@@ -68,6 +70,7 @@
             <strong data-count="dad">0</strong>
             <span data-fine="dad">0원</span>
           </div>
+          <p class="carry-note hidden" data-carry="dad"></p>
           <div class="actions master-only">
             <button data-dec="dad" type="button" aria-label="아빠 횟수 1 감소">-1</button>
             <button data-inc="dad" type="button" aria-label="아빠 횟수 1 증가">+1</button>
@@ -87,6 +90,7 @@
             <strong data-count="minjae">0</strong>
             <span data-fine="minjae">0원</span>
           </div>
+          <p class="carry-note hidden" data-carry="minjae"></p>
           <div class="actions master-only">
             <button data-dec="minjae" type="button" aria-label="민재 횟수 1 감소">-1</button>
             <button data-inc="minjae" type="button" aria-label="민재 횟수 1 증가">+1</button>

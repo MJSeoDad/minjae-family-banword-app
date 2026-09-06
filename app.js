@@ -33,6 +33,11 @@ const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
 const formatWon = (amount) => `${Number(amount || 0).toLocaleString("ko-KR")}원`;
 const currentMonth = () => new Date().toISOString().slice(0, 7);
+const shiftMonth = (monthStr, delta) => {
+  const [year, month] = monthStr.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1 + delta, 1));
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
+};
 
 const state = {
   db: null,
@@ -63,6 +68,7 @@ const els = {
   monthlySummary: $("#monthlySummary"),
   paymentList: $("#paymentList"),
   paymentCount: $("#paymentCount"),
+  carryOverButton: $("#carryOverButton"),
   toast: $("#toast")
 };
 
@@ -91,7 +97,7 @@ function activeWord() {
 }
 
 function memberStat(memberId) {
-  return state.stats[memberId] || { count: 0, unpaidFine: 0 };
+  return state.stats[memberId] || { count: 0, unpaidFine: 0, carryOver: 0 };
 }
 
 function render() {
@@ -115,6 +121,12 @@ function render() {
     monthTotal += stat.unpaidFine || 0;
     $(`[data-count="${member.id}"]`).textContent = stat.count || 0;
     $(`[data-fine="${member.id}"]`).textContent = formatWon(stat.unpaidFine || 0);
+    const carryEl = $(`[data-carry="${member.id}"]`);
+    if (carryEl) {
+      const hasCarry = (stat.carryOver || 0) > 0;
+      carryEl.textContent = hasCarry ? `(이월 ${formatWon(stat.carryOver)} 포함)` : "";
+      carryEl.classList.toggle("hidden", !hasCarry);
+    }
   });
   els.monthTotal.textContent = formatWon(monthTotal);
 
@@ -146,11 +158,14 @@ function render() {
 
   els.monthlySummary.innerHTML = MEMBERS.map((member) => {
     const stat = memberStat(member.id);
+    const carriedNote = stat.carriedOverAt
+      ? ` · ${formatWon(stat.carriedOverAmount || 0)} 다음 달로 이월됨`
+      : "";
     return `
       <div class="summary-item">
         <div>
           <strong>${member.name}</strong>
-          <span>${stat.count || 0}회 사용</span>
+          <span>${stat.count || 0}회 사용${carriedNote}</span>
         </div>
         <strong>${formatWon(stat.unpaidFine || 0)}</strong>
       </div>
@@ -326,20 +341,91 @@ async function setMainWord(wordId) {
   showToast("이달의 대표 금지어가 변경되었습니다.");
 }
 
+async function carryOverPreviousMonth() {
+  requireAdmin();
+  const prevMonth = shiftMonth(state.month, -1);
+
+  const carriedNames = [];
+  let carriedTotal = 0;
+  let alreadyDone = 0;
+
+  for (const member of MEMBERS) {
+    const prevRef = appDoc("months", prevMonth, "stats", member.id);
+    const currRef = appDoc("months", state.month, "stats", member.id);
+
+    const result = await runTransaction(state.db, async (transaction) => {
+      const prevSnap = await transaction.get(prevRef);
+      if (!prevSnap.exists()) return "none";
+
+      const prevData = prevSnap.data();
+      if (prevData.carriedOverAt) return "already";
+
+      const amount = prevData.unpaidFine || 0;
+      if (amount <= 0) return "none";
+
+      const currSnap = await transaction.get(currRef);
+      const currData = currSnap.exists() ? currSnap.data() : { count: 0, carryOver: 0 };
+      const nextCarryOver = (currData.carryOver || 0) + amount;
+      const nextCount = currData.count || 0;
+
+      transaction.set(
+        currRef,
+        {
+          memberId: member.id,
+          count: nextCount,
+          carryOver: nextCarryOver,
+          unpaidFine: nextCarryOver + nextCount * FINE_PER_USE,
+          updatedAt: serverTimestamp()
+        },
+        { merge: true }
+      );
+
+      transaction.set(
+        prevRef,
+        {
+          carriedOverAt: serverTimestamp(),
+          carriedOverAmount: amount,
+          carriedOverTo: state.month
+        },
+        { merge: true }
+      );
+
+      return amount;
+    });
+
+    if (result === "already") {
+      alreadyDone += 1;
+    } else if (typeof result === "number") {
+      carriedTotal += result;
+      carriedNames.push(member.name);
+    }
+  }
+
+  if (carriedTotal > 0) {
+    showToast(`${carriedNames.join(", ")} 미납 ${formatWon(carriedTotal)}을(를) ${state.month}로 이월했습니다.`);
+  } else if (alreadyDone > 0) {
+    showToast("이미 이월 처리되었습니다.");
+  } else {
+    showToast(`${prevMonth}에 이월할 미납 금액이 없습니다.`);
+  }
+}
+
 async function changeCount(memberId, delta) {
   requireAdmin();
   const statRef = appDoc("months", state.month, "stats", memberId);
 
   await runTransaction(state.db, async (transaction) => {
     const snapshot = await transaction.get(statRef);
-    const current = snapshot.exists() ? snapshot.data() : { count: 0, unpaidFine: 0 };
+    const current = snapshot.exists() ? snapshot.data() : { count: 0, unpaidFine: 0, carryOver: 0 };
     const nextCount = Math.max(0, (current.count || 0) + delta);
+    const carryOver = current.carryOver || 0;
     transaction.set(
       statRef,
       {
         memberId,
         count: nextCount,
-        unpaidFine: nextCount * FINE_PER_USE,
+        carryOver,
+        unpaidFine: carryOver + nextCount * FINE_PER_USE,
         updatedAt: serverTimestamp()
       },
       { merge: true }
@@ -367,6 +453,7 @@ async function payFine(memberId) {
 
   await updateDoc(appDoc("months", state.month, "stats", memberId), {
     count: 0,
+    carryOver: 0,
     unpaidFine: 0,
     updatedAt: serverTimestamp(),
     paidCount: increment(stat.count || 0),
@@ -398,6 +485,12 @@ function bindEvents() {
   els.wordForm.addEventListener("submit", (event) => {
     addWord(event).catch((error) => showToast(error.message));
   });
+
+  if (els.carryOverButton) {
+    els.carryOverButton.addEventListener("click", () => {
+      carryOverPreviousMonth().catch((error) => showToast(error.message));
+    });
+  }
 
   document.addEventListener("click", (event) => {
     const target = event.target.closest("button");
